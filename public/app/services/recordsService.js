@@ -1,7 +1,5 @@
 app.factory("recordsService", function($http) {
 
-    var a;
-
     function Records() {
 
         Object.defineProperty(this, "loading", {
