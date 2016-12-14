@@ -51,7 +51,7 @@ app.config(['$routeProvider', '$locationProvider', function($routeProvider, $loc
 app.run(function($rootScope, $location, $http) {
 
     var USER_ROLES = {
-        admin: 2,
+        admin: 1,
         user: 1
     };
 
@@ -68,7 +68,7 @@ app.run(function($rootScope, $location, $http) {
 
     $rootScope.$on("$routeChangeStart", function(event, next) {
 
-        if ($rootScope.user.rule != USER_ROLES.admin && pages[next.originalPath] != $rootScope.user.rule) {
+        if (pages[next.originalPath] != $rootScope.user.rule) {
 
             if (!$rootScope.user.isAuth) {
                 $location.path("/");
