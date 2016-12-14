@@ -1,0 +1,9 @@
+.new-category(ng-click="newCategory(parent); $event.stopPropagation();",
+    ng-class="{subcategory : !!parent, adding: adding}",
+    ng-style="{'max-height': (30-2*depth + 'px')}",
+    depth="{{depth}}")
+
+    img(src="/images/icons/add.png", alt="")
+    p(ng-style="{'line-height': (30-2*depth + 'px'), 'font-size': (16-depth*1.5 + 'px')}")
+        span(ng-if="!parent") Категория
+        span(ng-if="!!parent") Подкатегория
