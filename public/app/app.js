@@ -68,6 +68,8 @@ app.run(function($rootScope, $location, $http) {
 
     $rootScope.$on("$routeChangeStart", function(event, next) {
 
+        
+
         if (pages[next.originalPath] != $rootScope.user.rule) {
 
             if (!$rootScope.user.isAuth) {

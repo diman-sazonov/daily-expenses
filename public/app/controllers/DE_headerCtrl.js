@@ -42,17 +42,12 @@ app.controller("DE_headerCtrl", function($scope, $rootScope, $http) {
         $rootScope.user.isAuth = !!cookie['isAuth'];
         $rootScope.user.username = cookie['username'];
 
-        switch(cookie['username']) {
-            case "admin":
-                $rootScope.user.rule = 2;
-                break;
-            case undefined:
-                $rootScope.user.rule = 0;
-                break;
-            default:
-                $rootScope.user.rule = 1;
+        if (cookie['username']) {
+            $rootScope.user.rule = 1;
+        } else {
+            $rootScope.user.rule = 0;
         }
-
+        
     }
 
     init();
