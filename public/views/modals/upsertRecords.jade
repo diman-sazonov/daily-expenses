@@ -1,12 +1,12 @@
 .modal-updateRecords
     .modal-header
         h3.modal-title
-            span(ng-if="countRecords == 0 && !edit_mode") Добавить запись
-            span(ng-if="countRecords == 1 && edit_mode") Изменить запись
-            span(ng-if="countRecords > 1 && edit_mode") Переместить записи
+            span(ng-if="!edit_mode") Добавить записи
+            span(ng-if="edit_mode && records.selected.length == 1") Изменить запись
+            span(ng-if="edit_mode && records.selected.length > 1") Переместить записи
 
     .modal-body
-        table(ng-if="countRecords <= 1", style="margin: auto;")
+        table(style="margin: auto;", ng-if="records.selected.length <= 1")
             tr
                 td.col-md-4
                     select.form-control(ng-model="newData.selectDay")
@@ -20,19 +20,19 @@
         .row
             h4 Категория
             .container-fluid.categories(ng-repeat="category in categories.items", ng-include="'modal-template-categories'")
-        .row(ng-if="countRecords <= 1")
-            h4 Описание
-            input.form-control(ng-model='newData.description', type='text', placeholder='Описание')
-        .row(ng-if="countRecords <= 1")
+        .row(ng-if="records.selected.length <= 1")
             h4 Сумма
             input.form-control(ng-model='newData.money', required='required', type='number', placeholder='Сумма')
+        .row(ng-if="records.selected.length <= 1")
+            h4 Комментарий
+            textarea.form-control(ng-model='newData.description', placeholder='Комментарий...', rows="5")
 
     .modal-footer
         img.pull-right(src="/images/loading.gif", style="margin-right: 10px;", ng-show="loading")
-        .btn.btn-danger.pull-left(ng-click="false", ng-disabled="false", ng-show="!loading && countRecords == 1 && edit_mode") Удалить
-        .btn.btn-success(ng-click="moveRecords()",  ng-show="!loading && countRecords >  1 &&  edit_mode") Переместить
-        .btn.btn-success(ng-click="updateRecord()", ng-show="!loading && countRecords == 1 &&  edit_mode") Изменить
-        .btn.btn-success(ng-click="newData.money > 0 && addRecord()", ng-show="!loading && countRecords == 0 && !edit_mode", ng-disabled="newData.money <= 0") Добавить
+        //.btn.btn-danger.pull-left(ng-click="false", ng-disabled="false", ng-show="!loading && countRecords == 1 && edit_mode") Удалить
+        .btn.btn-primary(ng-click="moveRecords()",  ng-show="!loading", ng-if="edit_mode && records.selected.length > 1") Переместить
+        .btn.btn-success(ng-click="updateRecord()", ng-show="!loading", ng-if="edit_mode && records.selected.length == 1") Изменить
+        .btn.btn-success(ng-click="addRecord()", ng-show="!loading", ng-if="!edit_mode") Добавить
         .btn.btn-default(ng-click="close()", ng-show="!loading") Закрыть
 
 script(type="text/ng-template", id="modal-template-categories")

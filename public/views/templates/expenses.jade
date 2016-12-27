@@ -30,9 +30,9 @@
                     .title
                         span Записи
                         .buttons.pull-right
-                            .btn.btn-warning.btn-custom(ng-if="selectedRecords.length > 0", ng-click="updateRecords()")
+                            .btn.btn-warning.btn-custom(ng-if="records.selected.length > 0", ng-click="updateRecords()")
                                 .glyphicon.glyphicon-pencil
-                            .btn.btn-success.btn-custom(ng-click="addRecords()")
+                            .btn.btn-success.btn-custom(ng-if="records.selected.length == 0", ng-click="addRecords()")
                                 .glyphicon.glyphicon-plus-sign
                     .records
                         .record(ng-repeat="record in records",

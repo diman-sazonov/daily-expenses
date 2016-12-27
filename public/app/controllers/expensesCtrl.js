@@ -4,26 +4,6 @@ app.controller("expensesCtrl", function($scope, $rootScope, $http, $modal, categ
     
     $scope.categories = categoriesService[$scope.category_type];
     $scope.records = recordsService[$scope.category_type];
-
-    $scope.selectedRecords = new function() {
-
-        this.items = {};
-
-        this.addRecord = function(record) {
-            this.items[record.id] = record;
-        };
-
-        this.removeRecordById = function(id) {
-            delete this.items[id];
-        };
-
-        Object.defineProperty(this, "length", {
-            get: function() {
-                return Object.keys(this.items).length;
-            }
-        });
-
-    };
     
     $scope.addingCategory = false;
 
@@ -57,8 +37,11 @@ app.controller("expensesCtrl", function($scope, $rootScope, $http, $modal, categ
             }
         });
 
-        upsertCategoryModalInstance.result.then(function (modalResult) {
+        upsertCategoryModalInstance.result.then(function(modalResult) {
 
+            console.log(modalResult);
+            
+            /*
             // OK button clicked
             if (modalResult.status_code == 410) { // 410 - Gone (удален)
 
@@ -81,7 +64,7 @@ app.controller("expensesCtrl", function($scope, $rootScope, $http, $modal, categ
                 $scope.categories.all[modalResult.category.id].name = modalResult.category.name;
                 
             }
-
+            */
         }, function (modalResult) {
 
             //Cancel button clicked
@@ -98,24 +81,16 @@ app.controller("expensesCtrl", function($scope, $rootScope, $http, $modal, categ
             size: 'md',
             windowClass: "right-modal",
             resolve: {
-                countRecords: function() {
-                    return 0;
-                },
-                edit_mode: function() {
-                    return false;  
-                },
-                records: function() {
-                    return null;
-                },
-                categories: function() {
-                    return $scope.categories
+                type: function() {
+                    return $scope.category_type
                 }
             }
         });
 
-        upsertRecordsModalInstance.result.then(function (modalResult) {
+        upsertRecordsModalInstance.result.then(function(record) {
 
             // OK button clicked
+
 
         }, function (modalResult) {
 
@@ -139,6 +114,7 @@ app.controller("expensesCtrl", function($scope, $rootScope, $http, $modal, categ
 
     };
 
+
     $scope.updateRecords = function() {
         
         var upsertRecordsModalInstance = $modal.open({
@@ -148,84 +124,71 @@ app.controller("expensesCtrl", function($scope, $rootScope, $http, $modal, categ
             size: 'md',
             windowClass: "right-modal",
             resolve: {
-                countRecords: function() {
-                    return $scope.selectedRecords.length;
-                },
-                edit_mode: function() {
-                    return true;
-                },
-                records: function() {
-                    return $scope.selectedRecords.items;
-                },
-                categories: function() {
-                    return $scope.categories
+                type: function() {
+                    return $scope.category_type;
                 }
             }
         });
     
-        upsertRecordsModalInstance.result.then(function(data) {
+        upsertRecordsModalInstance.result.then(function(resultModal) {
 
             // OK button clicked
+
+            if (resultModal.record) {
+
+                console.log(resultModal, $scope.categories);
+
+                if ($scope.categories.checkCurrentTimestamp(resultModal.oldParams.timestamp)) {
+                    $scope.categories.all[resultModal.oldParams.category_id].moneyOfCategory -= resultModal.oldParams.money;
+                    $scope.categories.all[resultModal.oldParams.category_id].countRecords--;
+                }
+
+                if ($scope.categories.checkCurrentTimestamp(resultModal.record.timestamp)) {
+                    $scope.categories.all[resultModal.record.category_id].moneyOfCategory += resultModal.record.money;
+                    $scope.categories.all[resultModal.oldParams.category_id].countRecords++;
+                }
+
+            } else if (resultModal.records) {
+
+                console.log(resultModal);
+
+                for (var id in resultModal.oldRecords) {
+                    var record = resultModal.oldRecords[id];
+                    if ($scope.categories.checkCurrentTimestamp(record.timestamp)) {
+                        $scope.categories.all[record.category_id].moneyOfCategory -= record.money;
+                    }
+                }
+
+                for (var id in resultModal.records) {
+                    if (resultModal.records.hasOwnProperty(id)) {
+                        var record = resultModal.records[id];
+                        if ($scope.categories.checkCurrentTimestamp(record.timestamp)) {
+                            $scope.categories.all[record.category_id].moneyOfCategory += record.money;
+                        }
+                    }
+                }
+
+            }
+
 
         }, function (modalResult) {
     
             // Cancel button clicked
     
         });
-    
+        
+
     };
 
     $scope.selectRecord = function(record) {
 
         record.selected = !record.selected;
-
-        if (record.selected) {
-
-            $scope.selectedRecords.addRecord(record);
-
-        } else {
-
-            $scope.selectedRecords.removeRecordById(record.id);
-
-        }
-
+        
     };
 
     function init() {
 
     }
-
-    // function upsertRecordsModalResult(records) {
-    //
-    //     for (var id in records) {
-    //         if (records.hasOwnProperty(id)) {
-    //
-    //             $scope.categories.all[$scope.listRecords[id].category_id].moneyOfCategory -= $scope.listRecords[id].money;
-    //             $scope.categories.all[$scope.listRecords[id].category_id].countRecords--;
-    //
-    //             console.log($scope.categories.period);
-    //
-    //             if ((!$scope.categories.period.start || $scope.categories.period.start <= records[id].timestamp) &&
-    //                 (!$scope.categories.period.end || records[id].timestamp <= $scope.categories.period.end)) { // NOT moved to another time
-    //
-    //                 $scope.categories.all[records[id].category_id].moneyOfCategory += records[id].money;
-    //                 $scope.categories.all[records[id].category_id].countRecords++;
-    //
-    //                 if (records[id].category_id != $scope.listRecords[id].category_id) { // moved in another category
-    //                     delete $scope.listRecords[id];
-    //                 } else {
-    //                     $scope.listRecords[id] = records[id];
-    //                     $scope.listRecords[id].selected = true;
-    //                 }
-    //
-    //             } else {
-    //                 delete $scope.listRecords[id];
-    //             }
-    //
-    //         }
-    //     }
-    //
-    // }
 
     init();
     
