@@ -1,15 +1,17 @@
-app.controller('upsertRecordsCtrl', function($scope, $rootScope, $modalInstance, $http, countRecords, edit_mode, records, categories) {
+app.controller('upsertRecordsCtrl', function($scope, $rootScope, $modalInstance, $http, $timeout, type, categoriesService, recordsService) {
 
     $scope.days = [];
     $scope.months = Date.calendar.months;
     $scope.years = [2015, 2016, 2017];
 
     $scope.loading = false;
-    
-    $scope.countRecords = countRecords;
-    $scope.edit_mode = edit_mode;
-    $scope.records = records;
-    $scope.categories = categories;
+
+    $scope.type = type;
+
+    $scope.categories = categoriesService[type];
+    $scope.records = recordsService[type];
+
+    $scope.edit_mode = $scope.records.selected.length > 0;
 
     $scope.newData = {
         selectDay: 0,
@@ -29,36 +31,30 @@ app.controller('upsertRecordsCtrl', function($scope, $rootScope, $modalInstance,
             $scope.newData.selectMonth,
             $scope.newData.selectDay
         ).getTime();
-        
-        var category_id = $scope.newData.categoryId;
-        var money = $scope.newData.money;
-        var description = $scope.newData.description || "";
-        
-        $http.post("/api/records/add", {
+
+        var data = {
             timestamp: timestamp,
-            category_id: category_id,
-            money: money,
-            description: description
-        }).success(function(record) {
+            category_id: $scope.newData.categoryId,
+            money: $scope.newData.money,
+            description: $scope.newData.description || ""
+        };
 
-            if ((!$scope.categories.period.start || $scope.categories.period.start <= record.timestamp) &&
-                (!$scope.categories.period.end || record.timestamp <= $scope.categories.period.end)) {
+        $scope.records.addRecord(data, function(err, record) {
 
+            $scope.loading = false;
+
+            if (err) return console.error(err);
+
+            if ($scope.categories.checkCurrentTimestamp(record.timestamp)) {
                 $scope.categories.all[record.category_id].moneyOfCategory += record.money;
-                $scope.categories.all[record.category_id].countRecords += 1;
-
+                $scope.categories.all[record.category_id].countRecords++;
             }
 
             $scope.newData.money = "";
             $scope.newData.description = "";
-        
-            $scope.loading = false;
-        
-        }).error(function(err) {
-        
-            console.log(err);
-            $scope.loading = false;
-        
+
+            console.log(record);
+
         });
 
     };
@@ -67,33 +63,36 @@ app.controller('upsertRecordsCtrl', function($scope, $rootScope, $modalInstance,
 
         $scope.loading = true;
         
-        var records_ids = Object.keys($scope.records);
+        var oldRecords = JSON.parse(JSON.stringify($scope.records.selected));
 
-        $http.post("/api/records/moveToCategory/" + $scope.newData.categoryId, {
-            records_ids: records_ids
-        }).success(function(response) {
-            
-            for(var id in $scope.records) {
-                if ($scope.records.hasOwnProperty(id)) {
-                    $scope.records[id].category_id = $scope.newData.categoryId;
-                }
-            }
+        $scope.records.moveRecords($scope.records.selected, $scope.newData.categoryId, function(err, records) {
 
-            $modalInstance.close($scope.records);
             $scope.loading = false;
 
-        }).error(function(err) {
+            if (err) return console.error(err);
 
-            console.error(err);
-            $scope.loading = false;
+            $modalInstance.close({
+                oldRecords: oldRecords,
+                records: records,
+                status_code: 200
+            });
 
         });
-        
+
     };
     
     $scope.updateRecord = function() {
 
         $scope.loading = true;
+
+        var record = $scope.records.selected.single;
+
+        var oldParams = {
+            money: record.money,
+            description: record.description,
+            category_id: record.category_id,
+            timestamp: record.timestamp
+        };
         
         var timestamp = new Date(
             $scope.newData.selectYear,
@@ -108,24 +107,20 @@ app.controller('upsertRecordsCtrl', function($scope, $rootScope, $modalInstance,
             timestamp: timestamp
         };
 
-        var id = Object.keys($scope.records)[0];
+        $scope.records.updateRecord(record, params, function(err, record) {
 
-        $http.post("/api/records/update/" + id, params).success(function(record) {
-            
-            var response = {};
-            response[record.id] = record;
-        
-            $modalInstance.close(response);
-        
             $scope.loading = false;
-        
-        }).error(function(err) {
-        
-            console.error(err);
-            $scope.loading = false;
-        
+
+            if (err) return console.error(err);
+
+            $modalInstance.close({
+                oldParams: oldParams,
+                record: record,
+                status_code: 200
+            });
+
         });
-        
+
     };
         
     $scope.close = function() {
@@ -140,32 +135,24 @@ app.controller('upsertRecordsCtrl', function($scope, $rootScope, $modalInstance,
             $scope.days[i-1] = i;
         }
 
-        if ($scope.countRecords == 1) {
-            
-            var id = Object.keys($scope.records)[0];
+        if ($scope.records.selected.length == 1) {
 
-            var date = new Date($scope.records[id].timestamp);
-            var money = $scope.records[id].money;
-            var description = $scope.records[id].description;
-            var category_id = $scope.records[id].category_id;
+            var record_id = Object.keys($scope.records.selected)[0];
+
+            var dateOfRecord = new Date($scope.records[record_id].timestamp);
 
             $scope.newData = {
-                selectDay: date.getDate().toString(),
-                selectMonth: date.getMonth().toString(),
-                selectYear: date.getFullYear().toString(),
-                money: money,
-                description: description,
-                categoryId: category_id
+                selectDay: dateOfRecord.getDate().toString(),
+                selectMonth: dateOfRecord.getMonth().toString(),
+                selectYear: dateOfRecord.getFullYear().toString(),
+                money: $scope.records[record_id].money,
+                description: $scope.records[record_id].description,
+                categoryId: $scope.records[record_id].category_id
             };
-
-        } else if ($scope.countRecords > 1) {
-
-            var firstIdOfRecords = Object.keys($scope.records)[0];
-            $scope.newData.categoryId = $scope.records[firstIdOfRecords].category_id;
 
         } else {
 
-            date = new Date();
+            var date = new Date();
 
             $scope.newData = {
                 selectDay: date.getDate().toString(),

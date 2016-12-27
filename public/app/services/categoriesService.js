@@ -116,6 +116,17 @@ app.factory("categoriesService", function($http) {
             });
 
         };
+        
+        this.checkCurrentTimestamp = function(timestamp) {
+            
+            var current = true;
+            
+            if (this.period.start && this.period.start > timestamp) current = false;
+            if (this.period.end && this.period.end < timestamp) current = false;
+            
+            return current;
+            
+        };
 
         Object.defineProperty(this, "period", {
             get: function() {
@@ -184,7 +195,7 @@ app.factory("categoriesService", function($http) {
 
 
     }
-    
+
     return {
         expenses: new Categories("expenses"),
         earnings: new Categories("earnings")

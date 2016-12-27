@@ -98,14 +98,8 @@ function moveRecords(req, res) {
     Record.moveToCategory(category_id, records_ids, function(err, result) {
 
         if (err) return res.send(500, err);
-        
-        var response = {
-            statusCode: 301, // Moved Permanently (перемещено навсегда)
-            message: "Перемещено",
-            newCategoryId: category_id
-        };
-        
-        res.send(response);
+                
+        res.send("OK");
         
     });
         
