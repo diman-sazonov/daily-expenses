@@ -1,15 +1,19 @@
 app.controller("loginCtrl", function($scope, $rootScope, $http) {
-    
+
+    $scope.loading = false;
+
     $scope.signInParams = {
         username: "",
-        password: ""
+        password: "",
+        error: false
     };
 
     $scope.signUpParams = {
         username: "",
         password: "",
-        secondPwd: "",
-        email: ""
+        secondPassword: "",
+        errorPasswords: false,
+        errorLogin: false
     };
 
     $scope.params = {
@@ -17,10 +21,10 @@ app.controller("loginCtrl", function($scope, $rootScope, $http) {
         signUpFormShow: false
     };
     
-
     $scope.signIn = function() {
 
         //if ($scope.signInParams.username == "admin") return;
+        $scope.loading = true;
 
         $http.post("/signIn", {
             username: $scope.signInParams.username,
@@ -29,9 +33,13 @@ app.controller("loginCtrl", function($scope, $rootScope, $http) {
 
             window.location.href = '/main';
 
-        }).error(function(data, statusCode) {
+        }).error(function(message, status_code) {
 
-            console.error(data, statusCode);
+            if (status_code == 404){
+                $scope.signInParams.error = true;
+            }
+
+            $scope.loading = false;
 
         });
 
@@ -39,17 +47,37 @@ app.controller("loginCtrl", function($scope, $rootScope, $http) {
 
     $scope.signUp = function() {
 
+        var password = $scope.signUpParams.password;
+        var secondPassword = $scope.signUpParams.secondPassword;
+
+        if (password != secondPassword) {
+
+            $scope.signUpParams.errorPasswords = true;
+            return;
+
+        }
+
+        $scope.loading = true;
+
         $http.post("/signUp", {
             username: $scope.signUpParams.username,
-            password: $scope.signUpParams.password,
-            email: $scope.signUpParams.email
+            password: $scope.signUpParams.password
         }).success(function(data) {
 
-            console.log(data);
+            $scope.signInParams = {};
+            $scope.signUpParams = {};
+            $scope.showSignInForm();
+            $scope.loading = false;
 
-        }).error(function(data) {
+        }).error(function(data, status_code) {
 
-            console.log(data);
+            if (status_code == 403) {
+
+                $scope.signUpParams.errorLogin = true;
+
+            }
+
+            $scope.loading = false;
 
         });
 
@@ -68,5 +96,5 @@ app.controller("loginCtrl", function($scope, $rootScope, $http) {
         $scope.params.signUpFormShow = true;
 
     };
-
+    
 });

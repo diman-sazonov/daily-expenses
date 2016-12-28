@@ -12,7 +12,7 @@ function signIn(req, res) {
 
     User.getByUsernameAndPassword(user, function(err, user) {
 
-        if (err) return res.send(500, err);
+        if (err) return res.send(err.status_code, err.message);
 
         var resp = {
             username: user.username,
@@ -34,13 +34,12 @@ function signUp(req, res) {
 
     var user = {
         username: req.body.username,
-        password: req.body.password,
-        email: req.body.email
+        password: req.body.password
     };
 
     User.save(user, function(err) {
 
-        if (err) return res.send(500, err);
+        if (err) return res.send(err.status_code, err.message);
         
         res.send(200);
         

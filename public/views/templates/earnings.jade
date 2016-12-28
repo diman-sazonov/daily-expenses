@@ -1,4 +1,4 @@
-.container-fluid.earnings
+.container-fluid.earnings.root
 
     .container.state
         .container-fluid.col-md-3
@@ -11,8 +11,9 @@
                     div(block-loading, loading="categories.loading")
                     .title
                         span Категории
-                        .btn.btn-success.btn-custom.pull-right(ng-click="newCategory()", style="margin-left: -100%;")
-                            .glyphicon.glyphicon-plus-sign
+                        .buttons.pull-right
+                            .btn.btn-success.btn-custom.pull-right(ng-click="newCategory()")
+                                .glyphicon.glyphicon-plus-sign
                     .categories
                         new-category(adding="addingCategory", type="category_type")
                         .category(ng-repeat="category in categories.items | orderObjectBy:'money':true",
@@ -28,10 +29,15 @@
                     div(block-loading, loading="records.loading")
                     .title
                         span Записи
-                        .btn.btn-success.btn-custom.pull-right(ng-click="addRecords()", style="margin-left: -100%;")
-                            .glyphicon.glyphicon-plus-sign
+                        .buttons.pull-right
+                            .btn.btn-warning.btn-custom(ng-if="records.selected.length > 0", ng-click="updateRecords()")
+                                .glyphicon.glyphicon-pencil
+                            .btn.btn-success.btn-custom(ng-if="records.selected.length == 0", ng-click="addRecords()")
+                                .glyphicon.glyphicon-plus-sign
                     .records
-                        .record(ng-repeat="record in records")
+                        .record(ng-repeat="record in records",
+                        ng-click="selectRecord(record)",
+                        ng-class="{selected: record.selected}")
                             .col-md-6.name(ng-bind="record.timestamp | date:'dd.MM.yyyy'")
                             .col-md-6.money(ng-bind="(record.money | number:0) + ' р.'")
                             .description(ng-bind="record.description")

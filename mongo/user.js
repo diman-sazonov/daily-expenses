@@ -8,18 +8,26 @@ function save(data, callback) {
 
     var user = new User({
         username: data.username,
-        setPassword: data.password,
-        email: data.email
+        setPassword: data.password
     });
 
     user.save(function(err, user) {
 
         if (err) {
 
-            if (err.code == 11000) return callback(403);
+            if (err.code == 11000) {
+                return callback({
+                    status_code: 403,
+                    message: "Login exist"
+                });
+            }
 
             log.error(err);
-            return callback(500);
+            
+            return callback({
+                status_code: 500,
+                message: "Server error"
+            });
 
         }
 
@@ -42,12 +50,18 @@ function getByUsernameAndPassword(user, callback) {
 
         if (err) {
             log.error(err);
-            return callback(500);
+            return callback({
+                status_code: 500,
+                message: "Server error"
+            });
         }
 
         if (user) return callback(null, user);
 
-        callback(404);
+        callback({
+            status_code: 404,
+            message: "not auth"
+        });
 
     });
 
